@@ -165,10 +165,11 @@ automod-bot/
 
 ## 📜 License
 
-MIT © 2025 Khanmanan
+MIT © 2026 Khanmanan
 
 ---
 
 ## 👤 Author
 
 **Khanmanan** · [GitHub](https://github.com/Khanmanan) · [Bot Repo](https://github.com/Khanmanan/automod-bot)
+*u 
