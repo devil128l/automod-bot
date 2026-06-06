@@ -1,35 +1,46 @@
-// /commands/info/emojiinfo.js
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('emojiinfo')
-    .setDescription('Displays information about a custom emoji.')
-    .addStringOption(option =>
-      option.setName('emoji')
-        .setDescription('Emoji to get info on (e.g. <:smile:1234567890>)')
+    .setDescription('Displays information about a custom emoji')
+    .addStringOption(opt =>
+      opt.setName('emoji')
+        .setDescription('Paste the custom emoji (e.g. <:name:id> or <a:name:id>)')
         .setRequired(true)),
+
   async execute(interaction) {
     const input = interaction.options.getString('emoji');
-    const match = input.match(/<a?:\w+:(\d+)>/);
+    const match = input.match(/<(a)?:(\w+):(\d+)>/);
 
     if (!match) {
-      return interaction.reply({ content: 'Invalid emoji format.', ephemeral: true });
+      return interaction.reply({ content: '❌ Invalid emoji format. Use a custom server emoji like `<:name:id>`.', ephemeral: true });
     }
 
-    const emoji = interaction.client.emojis.cache.get(match[1]);
-    if (!emoji) return interaction.reply({ content: 'Emoji not found in cache.', ephemeral: true });
+    const [, animated, name, id] = match;
+    const ext = animated ? 'gif' : 'png';
+    const url = `https://cdn.discordapp.com/emojis/${id}.${ext}?size=256`;
+
+    const emoji = interaction.client.emojis.cache.get(id);
 
     const embed = new EmbedBuilder()
-      .setTitle(`🧩 Emoji Info: ${emoji.name}`)
-      .setThumbnail(emoji.url)
+      .setTitle(`🧩 Emoji: :${name}:`)
+      .setThumbnail(url)
       .setColor('Yellow')
       .addFields(
-        { name: 'ID', value: emoji.id, inline: true },
-        { name: 'Animated', value: emoji.animated ? 'Yes' : 'No', inline: true },
-        { name: 'Created', value: `<t:${Math.floor(emoji.createdTimestamp / 1000)}:F>`, inline: true },
-        { name: 'URL', value: `[Link](${emoji.url})`, inline: false }
+        { name: '🆔 ID', value: id, inline: true },
+        { name: '📛 Name', value: name, inline: true },
+        { name: '🎞️ Animated', value: animated ? 'Yes' : 'No', inline: true },
       );
+
+    if (emoji) {
+      embed.addFields(
+        { name: '📅 Created', value: `<t:${Math.floor(emoji.createdTimestamp / 1000)}:D>`, inline: true },
+        { name: '🌐 Server', value: emoji.guild?.name ?? 'Unknown', inline: true },
+      );
+    }
+
+    embed.addFields({ name: '🔗 URL', value: `[Open Image](${url})`, inline: false });
 
     await interaction.reply({ embeds: [embed] });
   }

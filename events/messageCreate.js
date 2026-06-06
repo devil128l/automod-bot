@@ -1,47 +1,65 @@
 const GuildSettings = require('../models/GuildSettings');
 
-const userMessages = new Map();
-const linkRegex = /(https?:\/\/[^\s]+)/g;
+const spamTracker = new Map();
+const LINK_REGEX = /https?:\/\/(www\.)?[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_+.~#?&/=]*)/gi;
 
 module.exports = {
   name: 'messageCreate',
   async execute(message) {
     if (message.author.bot || !message.guild) return;
 
-    const settings = await GuildSettings.findOne({ guildId: message.guild.id });
+    let settings;
+    try {
+      settings = await GuildSettings.findOne({ guildId: message.guild.id });
+    } catch (_) { return; }
+
     if (!settings?.automodEnabled) return;
 
-    // Anti-Link
-    if (settings.antiLink && linkRegex.test(message.content)) {
+    const isStaff = message.member?.permissions.has(0x8n) || message.member?.roles.cache.some(r => r.permissions.has(0x8n));
+    if (isStaff) return;
+
+    if (settings.antiLink && LINK_REGEX.test(message.content)) {
+      LINK_REGEX.lastIndex = 0;
       try {
         await message.delete();
-        await message.channel.send({
-          content: `🚫 No links allowed here, <@${message.author.id}>!`,
+        const warn = await message.channel.send({
+          content: `🔗 No links allowed, <@${message.author.id}>!`
         });
+        setTimeout(() => warn.delete().catch(() => {}), 5000);
       } catch (err) {
-        console.error('Error deleting link message:', err);
+        console.error('[antiLink] Error:', err.message);
       }
+      return;
     }
 
-    // Anti-Spam
+    LINK_REGEX.lastIndex = 0;
+
     if (settings.antiSpam) {
+      const key = `${message.guild.id}:${message.author.id}`;
       const now = Date.now();
-      const key = `${message.guild.id}-${message.author.id}`;
-      if (!userMessages.has(key)) userMessages.set(key, []);
-      const timestamps = userMessages.get(key);
+      const threshold = settings.spamThreshold || 5;
+      const interval = settings.spamInterval || 5000;
 
+      if (!spamTracker.has(key)) spamTracker.set(key, []);
+      const timestamps = spamTracker.get(key).filter(ts => now - ts < interval);
       timestamps.push(now);
-      const recent = timestamps.filter(ts => now - ts < 5000);
-      userMessages.set(key, recent);
+      spamTracker.set(key, timestamps);
 
-      if (recent.length >= 5) {
+      setTimeout(() => {
+        const t = spamTracker.get(key);
+        if (t) spamTracker.set(key, t.filter(ts => Date.now() - ts < interval));
+      }, interval);
+
+      if (timestamps.length >= threshold) {
         try {
           await message.delete();
-          await message.channel.send({
-            content: `⚠️ Stop spamming, <@${message.author.id}>!`,
+          const warn = await message.channel.send({
+            content: `⚠️ Slow down, <@${message.author.id}>! You're sending messages too fast.`
           });
+          spamTracker.set(key, []);
+          setTimeout(() => warn.delete().catch(() => {}), 5000);
         } catch (err) {
-          console.error('Error deleting spam message:', err);
+          console.error('[antiSpam] Error:', err.message);
         }
       }
     }

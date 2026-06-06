@@ -4,7 +4,7 @@ const GuildSettings = require('../../models/GuildSettings');
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('antilink')
-    .setDescription('Enable or disable anti-link protection.')
+    .setDescription('Toggle anti-link protection (deletes messages containing URLs)')
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
 
   async execute(interaction) {
@@ -14,10 +14,17 @@ module.exports = {
     settings.antiLink = !settings.antiLink;
     await settings.save();
 
+    const enabled = settings.antiLink;
     const embed = new EmbedBuilder()
-      .setTitle('Anti-Link Toggled')
-      .setDescription(`Anti-link protection is now **${settings.antiLink ? 'enabled ✅' : 'disabled ❌'}**.`)
-      .setColor(settings.antiLink ? 'Green' : 'Red');
+      .setTitle(`🔗 Anti-Link ${enabled ? 'Enabled' : 'Disabled'}`)
+      .setDescription(
+        enabled
+          ? 'Messages containing URLs will now be automatically deleted.'
+          : 'URL filtering has been turned off.'
+      )
+      .setColor(enabled ? 'Green' : 'Red')
+      .setFooter({ text: `Toggled by ${interaction.user.tag}` })
+      .setTimestamp();
 
     await interaction.reply({ embeds: [embed], ephemeral: true });
   }

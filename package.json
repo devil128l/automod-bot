@@ -1,7 +1,7 @@
 {
   "name": "automod-bot",
-  "version": "1.0.0",
-  "description": "A powerful Discord moderation bot with auto mod, slash commands, and a dashboard",
+  "version": "2.0.0",
+  "description": "A powerful Discord moderation bot with automod, slash commands, advanced logging, and more",
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
@@ -16,7 +16,10 @@
   "dependencies": {
     "discord.js": "^14.26.4",
     "dotenv": "^16.3.1",
+    "express": "^4.18.2",
     "moment": "^2.29.4",
-    "mongoose": "^7.6.1"
+    "mongoose": "^7.6.1",
+    "ms": "^2.1.3",
+    "uuid": "^9.0.0"
   }
 }
