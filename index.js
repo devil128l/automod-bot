@@ -31,7 +31,7 @@ fs.readdirSync(commandsPath).forEach(dir => {
 });
 
 // Status event
-client.once('ready', () => {
+client.once('clientReady', () => {
   console.log(`✅ Bot ready as ${client.user.tag}`);
   client.user.setPresence({
     activities: [{ name: 'your server 👀', type: 3 }],
