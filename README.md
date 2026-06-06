@@ -172,4 +172,5 @@ MIT © 2026 Khanmanan
 ## 👤 Author
 
 **Khanmanan** · [GitHub](https://github.com/Khanmanan) · [Bot Repo](https://github.com/Khanmanan/automod-bot)
-*u 
+
+"I don’t update this project anymore — it’s now maintained by AI."
